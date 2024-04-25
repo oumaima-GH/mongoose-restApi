@@ -6,6 +6,9 @@ const app = express()
 // const router = express.Router()
 const taskRouter = require('./router/taskRouter')
 const userRouter = require('./router/userRouter')
+const authRouter = require('./router/authRouter')
+
+
 // const { getAllTasks, getTasks, createTask, updateTask, deleteTask } = require('./controller/taskController');
 
 
@@ -19,6 +22,8 @@ app.use('/api/v1/tasks', taskRouter)
 
 
 app.use('/api/v1/users', userRouter)
+
+app.use('/api/v1', authRouter)
 
 
 // app.use('/tasks/:id', router.taskRouter)

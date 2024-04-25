@@ -1,125 +1,186 @@
 const fs = require('fs')
+// const mongoose = require("mongoose")
+const Task = require("../models/taskModel")
 
 
 // GET REQUEST
 
-exports.getAllTasks = (req, res)=>{
-    fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
-        if(err) return err
-        console.log(data);
-        res.end(data)
-    })
+exports.getAllTasks = async (req, res)=>{
+
+    try{
+        const tasks = await Task.find()
+        res.status(200).json(tasks)
+
+    } catch(err){
+        console.log('error: ', err);
+    }
+    // fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
+    //     if(err) return err
+    //     console.log(data);
+    //     res.end(data)
+    // })
 }
 
 
-exports.getTasks = (req, res)=>{
-    console.log(req.params.id);
-    const id = +req.params.id
-    fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
-        if(err) return err
+exports.getTasks = async (req, res)=>{
+    // console.log(req.params.id);
+    const id = req.params.id
 
-        const tasks = JSON.parse(data);
-        const task = tasks.find(task => task.id === id)
+    try{
+        const task = await Task.findById(id)
 
-        // if(task){
-        //     res.json(task)
-        // }
+        if (!task) {
+            return res.status(404).json({ error: 'task not found' })
+          }
+          res.status(200).json(task)
+    } catch(err){
+        console.log('error: ',err);
+    }
 
-        res.status(200).json({
-            task
-        })
+    
+    // fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
+    //     if(err) return err
+
+    //     const tasks = JSON.parse(data);
+    //     const task = tasks.find(task => task.id === id)
+
+    //     // if(task){
+    //     //     res.json(task)
+    //     // }
+
+    //     res.status(200).json({
+    //         task
+    //     })
        
-    })
+    // })
 }
 
 
 //POST REQUEST
 
-exports.createTask = (req, res)=>{
+exports.createTask = async (req, res)=>{
+
+    
+    try {
+      const {task, completed } = req.body
+      console.log(task)
+      console.log(completed)
+      const newTask = await Task.create({ task, completed });
+      res.status(201).json({
+        newTask
+    })
+
+  } catch (err) {
+    console.log('error: ', err);
+   
+  }
+
     // console.log(req.body);
     // res.end('done')
-    fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
-        if(err) return err
+//     fs.readFile(`${__dirname}/../data.json`, (err, data)=>{
+//         if(err) return err
   
 
-    const tasks = JSON.parse(data)
-    const newTask = req.body.task
-    // let newId = uuidv4()
-    let newId = Math.floor(Math.random()*1000)
+//     const tasks = JSON.parse(data)
+//     const newTask = req.body.task
+//     // let newId = uuidv4()
+//     let newId = Math.floor(Math.random()*1000)
 
-    tasks.push({id: newId, task: newTask})
+//     tasks.push({id: newId, task: newTask})
 
 
-   fs.writeFile(`${__dirname}/../data.json`, JSON.stringify(tasks), err => {
-    if(err) return err
-   })
+//    fs.writeFile(`${__dirname}/../data.json`, JSON.stringify(tasks), err => {
+//     if(err) return err
+//    })
     
-    res.status(201).json({
-        id: newId,
-        task: newTask
-    })
-})
+//     res.status(201).json({
+//         id: newId,
+//         task: newTask
+//     })
+// })
 }
 
 
 // UPDATE TASK
 
-exports.updateTask = (req, res) => {
-    const id = +req.params.id
-    const updatedTask = req.body.task
+    exports.updateTask = async (req, res) => {
 
-    fs.readFile(`${__dirname}/../data.json`, (err, data) => {
-        if (err) return err
+        const id = req.params.id
+        const {task} = req.body
 
-        const tasks = JSON.parse(data);
-        const taskToUpdate = tasks.find(task => task.id === id)
+    try {
+      const updatedTask = await Task.findByIdAndUpdate(id, {$set: { task }})
 
-        if (!taskToUpdate) {
-            return res.status(404).json({ 
-                error: "Task not found" 
-            })
-        }
+      if (!updatedTask) {
+      return res.status(404).json({ error: 'task not found' });
+      }
 
-        taskToUpdate.task = updatedTask;
-
-        fs.writeFile(`${__dirname}/../data.json`, JSON.stringify(tasks), err => {
-            if (err) return err
+      res.status(200).json(updatedTask)
+     } catch (err) { console.log('error: ', err); }
 
 
+        // const id = req.params.id
+        // const updatedTask = req.body.task
+
+        // fs.readFile(`${__dirname}/../data.json`, (err, data) => {
+        //     if (err) return err
+
+        //     const tasks = JSON.parse(data);
+        //     const taskToUpdate = tasks.find(task => task.id === id)
+
+        //     if (!taskToUpdate) {
+        //         return res.status(404).json({ 
+        //             error: "Task not found" 
+        //         })
+        //     }
+
+        //     taskToUpdate.task = updatedTask;
+
+        //     fs.writeFile(`${__dirname}/../data.json`, JSON.stringify(tasks), err => {   
+        //         if (err) return err
 
 
-            res.status(200).json({
-                id: id,
-                task: updatedTask
-            })
-        })
-    })
-}
+
+
+        //         res.status(200).json({
+        //             id: id,
+        //             task: updatedTask
+        //         })
+        //     })
+        // })
+    }
 
 
 //DELETE REQUEST
 
-exports.deleteTask = (req, res)=>{
-    const id = +req.params.id
+exports.deleteTask = async (req, res)=>{
+
+    const id = req.params.id
+    console.log(id)
+     const deletedTask = await Task.deleteOne({_id:id})
+    res.json(
+        {message : "task deleted succeffuly!!!", 
+                deletedTask})
+    // c    onst id = +req.params.id
     
 
-    fs.readFile(`${__dirname}/data.json`, (err, data)=>{
-        if(err) return err
+    // fs.readFile(`${__dirname}/data.json`, (err, data)=>{
+    //     if(err) return err
 
-        const tasks = JSON.parse(data)
-        const deleteTask = tasks.filter(task => task.id !== id)
+    //     const tasks = JSON.parse(data)
+    //     const deleteTask = tasks.filter(task => task.id !== id)
 
 
         
-    fs.writeFile(`${__dirname}/data.json`, JSON.stringify(deleteTask), err=>{
-        if(err) return err
+    // fs.writeFile(`${__dirname}/data.json`, JSON.stringify(deleteTask), err=>{
+    //     if(err) return err
 
-        res.status(200).json({
-            result: deleteTask
-        })
+    //     res.status(200).json({
+    //         result: deleteTask
+    //     })
 
-    })
-    })
+    // })
+    // })
 
 }
 
